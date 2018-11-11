@@ -31,6 +31,8 @@ const store = new Wallant({
     }
   }
 })
+
+export default store
 ```
 
 now we linking store to the component
