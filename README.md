@@ -88,20 +88,18 @@ Actions allow you modify state, `this` make reference to `store`.
 ```js
 const store = new Wallant({
   state: {
-    state: {
-      count: 0
-    },
-    actions: {
-      add () {
-        // tip! you can use 'ss' method
-        // instead of 'setState', there
-        // is not diferences, it's only
-        // a short hand
+    count: 0
+  },
+  actions: {
+    add () {
+      // tip! you can use 'ss' method
+      // instead of 'setState', there
+      // is not diferences, it's only
+      // a short hand
 
-        this.ss({
-          count: this.state.count + 1
-        })
-      }
+      this.ss({
+        count: this.state.count + 1
+      })
     }
   }
 })
@@ -240,4 +238,4 @@ render () {
 }
 ```
 
-`!!store.state.property &&` avoid render of element bellow meanwhile property in store is `undefined`
+`!!store.state.property &&` avoid render of element bellow meanwhile property in store is `undefined`.
