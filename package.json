@@ -1,0 +1,18 @@
+{
+  "name": "wallant",
+  "version": "1.0.0",
+  "description": "A new way of handling the state",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "state"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/e1016/wallant.git"
+  },
+  "author": "e1016 <contact@eliseo.io>",
+  "license": "MIT"
+}
