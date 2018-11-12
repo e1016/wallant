@@ -14,8 +14,8 @@ class Wallant {
     this.refs = []
     this.action = {}
     this.persistant = !!persistant 
-    this.validate = validate
-    this.computed = computed
+    this.validate = validate || {}
+    this.computed = computed || {}
     this.restored = false
 
     // may no need restore state
@@ -102,9 +102,10 @@ class Wallant {
       * we assign and validate than
       * validate key exists in one step
       */
+
       if (funValidate = this.validate[key]) {
         // assign state meanwhile function return true
-        if (funValidate(state[key], this.state[key]))
+        if (funValidate(state[key], this.state[key]) || !this.restored)
           this.state[key] = state[key]
       } else {
         // if isn't declared just assign
