@@ -1,12 +1,16 @@
-<h1 align="center">Wallant</h1>
 
-<p align="center">New way of handling the state</p>
+<p align="center">
+  <img src="https://i.imgur.com/M1JFh4j.png" width="400">
+</p>
+
+
+<p align="center">Persistant, Auto-validate, and computed state container</p>
 
 ---
 ## install
 `npm i -s wallant`
 
-## usage
+## use
 
 basic configuration in `/ReactNativeApp/src/Store.js`
 
