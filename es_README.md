@@ -7,6 +7,10 @@
 <p align="center">Persistant, Auto-validate, and computed state container</p>
 
 ---
+
+<a href="https://github.com/e1016/wallant/blob/master/README.md">Read the documentation in English</a>
+
+---
 ## instalación
 `npm i -s wallant`
 
