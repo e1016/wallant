@@ -52,10 +52,7 @@ import store from './src/Store'
 
 class App extends Component {
   componentDidMount () {
-    store.include(this)
-  }
-  componentWillUnmount () {
-    store.exclude(this)
+    store.use(this)
   }
   render () {
     return (
@@ -70,7 +67,7 @@ class App extends Component {
 }
 ```
 
-El store toma el control del componente cuando los enlazas en `componentDidMount` y el componente es excluido en `componentWillUnmount`, esto previene el error `[...] can't call setState or forceUpdate from unmounted component [...]`, en otros stores se utiliza un `<Provider>`, pero nosotros queremos mantener un poco mas de control sobre que componente accede y cual no al store.
+El store toma el control del componente cuando los enlazas en `componentDidMount`, en otros stores se utiliza un `<Provider>`, pero nosotros queremos mantener un poco más de control sobre que componente accede y cual no al store.
 
 ---
 

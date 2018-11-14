@@ -1,4 +1,6 @@
+import { Component } from 'react'
 import { AsyncStorage } from 'react-native'
+
 import message from './consts'
 
 // used for AscynStorage
@@ -27,10 +29,11 @@ class Wallant {
 
     this.state = state
 
-    // preserved state copy for
-    // set again when stored state
-    // is deleted
-
+    /*
+    * preserved state copy for
+    * set again when stored state
+    * is deleted
+    */
     this.provisingState = Object.assign({}, state)
 
     /*
@@ -38,7 +41,6 @@ class Wallant {
     * is neccessary for use 'this'
     * in action methods
     */
-
     for (const key in actions) {
       if (typeof actions[key] !== 'function')
         throw message.SHOULD_BE_FUNCTION
@@ -90,9 +92,10 @@ class Wallant {
   }
 
   dispatchUpdateComponents () {
-    this.refs.forEach(component =>
-      component.forceUpdate()
-    )
+    this.refs.forEach(component => {
+      if (component.updater.isMounted(component))
+        component.forceUpdate()
+    })
   }
 
   setState (state, isCalledFromSelfStore) {
@@ -136,21 +139,10 @@ class Wallant {
     this.setState(state, isCalledFromSelfStore)
   }
 
-  include (component) {
+  use (component) {
     // include new component in refs
+    // .updater.isMounted(this)
     this.refs.push(component)
-  }
-
-  exclude (component) {
-    /*
-    * erasing component from refs, avoid error:
-    *
-    * can't call setState or forceUpdate
-    * from unmounted component [...]
-    */
-    this.refs = this.refs.filter(ref =>
-      ref !== component
-    )
   }
 }
 

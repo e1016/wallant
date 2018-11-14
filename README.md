@@ -53,10 +53,7 @@ import store from './src/Store'
 
 class App extends Component {
   componentDidMount () {
-    store.include(this)
-  }
-  componentWillUnmount () {
-    store.exclude(this)
+    store.use(this)
   }
   render () {
     return (
@@ -71,7 +68,7 @@ class App extends Component {
 }
 ```
 
-Store take control of component when you link it on `componentDidMount` and component is excluded on `componentWillUnmount`, this is for prevent error: `[...] can't call setState or forceUpdate from unmounted component [...]`, in other stores is used a `<Provider>` solution, but we want get control from linking store, and set reactive state only in neccessary components.
+Store take control of component when you link it on `componentDidMount`, in other stores is used a `<Provider>` solution, but we want get control from linking store, and set reactive state only in neccessary components.
 
 ---
 Now, all this is a simple store, but wallant can do more interesting things...
