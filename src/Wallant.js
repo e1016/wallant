@@ -1,13 +1,16 @@
-import { Component } from 'react'
 import { AsyncStorage } from 'react-native'
 
 import message from './consts'
+import Debugger from './wallant-debugger'
 
 // used for AscynStorage
 const STORE_NAME = '@simplestate:persistantstate:store'
 
-class Wallant {
-  constructor ({ state, actions, persistant, validate, computed }) {
+class Wallant extends Debugger {
+  constructor ({ state, actions, persistant, validate, computed, debug }) {
+
+    super(debug)
+
     /*
     * 'refs' is used for save
     * mounted components and dispatch
@@ -15,10 +18,13 @@ class Wallant {
     */
     this.refs = []
     this.action = {}
-    this.persistant = !!persistant 
+
+    this.persistant = !!persistant
+
     this.validate = validate || {}
     this.computed = computed || {}
     this.restored = false
+    this.debug = debug || []
 
     // may no need restore state
     if (this.persistant)
@@ -99,17 +105,27 @@ class Wallant {
   }
 
   setState (state, isCalledFromSelfStore) {
+
+    if (this.debug.includes('state') && !isCalledFromSelfStore)
+      this.printState(state, this.state)
+
     for (const key in state) {
-      let funValidate
+      let fnValidate
       /*
       * we assign and validate than
       * validate key exists in one step
       */
 
-      if (funValidate = this.validate[key]) {
+      if (fnValidate = this.validate[key]) {
         // assign state meanwhile function return true
-        if (funValidate(state[key], this.state[key]) || !this.restored)
+        const accepted = fnValidate(state[key], this.state[key])
+
+        if (this.debug.includes('validate') && !isCalledFromSelfStore)
+          this.printValidate(key, accepted, state[key], this.state[key])
+
+        if (accepted || !this.restored)
           this.state[key] = state[key]
+
       } else {
         // if isn't declared just assign
         this.state[key] = state[key]
@@ -120,6 +136,9 @@ class Wallant {
       const fnCompute = this.computed[key]
       this.state[key] = (fnCompute.bind(this))()
     }
+
+    if (this.debug.includes('state') && !isCalledFromSelfStore)
+      this.printFinalState(this.state)
 
     if (this.persistant) {
       if (isCalledFromSelfStore)
@@ -141,7 +160,6 @@ class Wallant {
 
   use (component) {
     // include new component in refs
-    // .updater.isMounted(this)
     this.refs.push(component)
   }
 }
