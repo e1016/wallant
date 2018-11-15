@@ -247,3 +247,9 @@ render () {
 ```
 
 `!!store.state.property &&` avoid render of element bellow meanwhile property in store is `undefined`.
+
+---
+### Flow
+<p align="center">
+  <img src="https://i.imgur.com/tkJjZZ6.png" alg="Wallant data flow">
+</p>

@@ -247,3 +247,10 @@ render () {
 ```
 
 `!!store.state.property &&` evita que se evalue lo que está justo despues del mismo, y de esa forma se itera hasta que hay valores en la propierda.
+
+---
+
+### Flujo de datos
+<p align="center">
+  <img src="https://i.imgur.com/tkJjZZ6.png" alg="Wallant data flow">
+</p>
