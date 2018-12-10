@@ -1,8 +1,11 @@
+<p>
+  <img src="https://img.shields.io/npm/dt/wallant.svg?colorB=8bc34a"/>
+  <img src="https://img.shields.io/npm/v/wallant.svg?colorB=f44336"/>
+</p>
 
 <p align="center">
   <img src="https://i.imgur.com/M1JFh4j.png" width="400">
 </p>
-
 
 <p align="center">Persistant, Auto-validate, and computed state container</p>
 
