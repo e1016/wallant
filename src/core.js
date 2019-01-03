@@ -1,13 +1,22 @@
 import { AsyncStorage } from 'react-native'
 
 import message from './consts'
-import Debugger from './wallant-debugger'
+import Debugger from './debugger'
 
 // used for AscynStorage
 const STORE_NAME = '@simplestate:persistantstate:store'
 
 class Wallant extends Debugger {
-  constructor ({ state, actions, persistant, validate, computed, debug }) {
+  constructor ({
+    state,
+    actions,
+    persistant,
+    validate,
+    computed,
+    debug,
+    created,
+    plugins
+  }) {
 
     super(debug)
 
@@ -25,13 +34,16 @@ class Wallant extends Debugger {
     this.computed = computed || {}
     this.restored = false
     this.debug = debug || []
+    this.plugins = plugins
 
     // may no need restore state
-    if (this.persistant)
+    if (this.persistant) {
       this.restoreState()
+    }
 
-    if ((typeof state !== 'object') && !(state instanceof Array))
+    if ((typeof state !== 'object') && !(state instanceof Array)) {
       throw message.SHOULD_BE_OBJECT
+    }
 
     this.state = state
 
@@ -53,6 +65,17 @@ class Wallant extends Debugger {
 
       this.action[key] = actions[key].bind(this)
     }
+
+    /*
+    * Only a shorthand
+    * for setState method
+    */
+    this.ss = this.setState
+
+    !!Array.isArray(this.plugins) && this.installPlugins()
+
+    // on create store exec
+    !!(typeof created === 'function') && created.apply(this)
   }
 
   async restoreState () {
@@ -61,9 +84,9 @@ class Wallant extends Debugger {
     /*
     * NOTE: checking on this...
     */
-    if (state)
+    if (state) {
       this.setState(JSON.parse(state), true)
-    else {
+    } else {
       this.setState(
         Object.assign({}, this.provisingState),
         true
@@ -74,7 +97,7 @@ class Wallant extends Debugger {
 
   saveState () {
     AsyncStorage.setItem(STORE_NAME, JSON.stringify(this.state))
-      .then((err, result) => {
+      .then((err) => {
         if (err) throw message.STORAGE_INAVALIBLE
       })
   }
@@ -90,6 +113,7 @@ class Wallant extends Debugger {
         if (err)
           throw message.STORAGE_INAVALIBLE
 
+        this.state = {}
         this.setState(
           Object.assign({}, this.provisingState),
           true
@@ -99,15 +123,17 @@ class Wallant extends Debugger {
 
   dispatchUpdateComponents () {
     this.refs.forEach(component => {
-      if (component.updater.isMounted(component))
+      if (component.updater.isMounted(component)) {
         component.forceUpdate()
+      }
     })
   }
 
   setState (state, isCalledFromSelfStore) {
 
-    if (this.debug.includes('state') && !isCalledFromSelfStore)
+    if (this.debug.includes('state') && !isCalledFromSelfStore) {
       this.printState(state, this.state)
+    }
 
     for (const key in state) {
       let fnValidate
@@ -120,11 +146,13 @@ class Wallant extends Debugger {
         // assign state meanwhile function return true
         const accepted = fnValidate(state[key], this.state[key])
 
-        if (this.debug.includes('validate') && !isCalledFromSelfStore)
+        if (this.debug.includes('validate') && !isCalledFromSelfStore) {
           this.printValidate(key, accepted, state[key], this.state[key])
+        }
 
-        if (accepted || !this.restored)
+        if (accepted || !this.restored) {
           this.state[key] = state[key]
+        }
 
       } else {
         // if isn't declared just assign
@@ -141,26 +169,44 @@ class Wallant extends Debugger {
       this.printFinalState(this.state)
 
     if (this.persistant) {
-      if (isCalledFromSelfStore)
+      if (isCalledFromSelfStore) {
         this.restored = true
-      else
+      } else {
         this.saveState()
+      }
     }
 
     this.dispatchUpdateComponents()
   }
 
-  ss (state, isCalledFromSelfStore) {
-    /*
-    * Only a shorthand
-    * for setState method
-    */
-    this.setState(state, isCalledFromSelfStore)
-  }
-
   use (component) {
     // include new component in refs
-    this.refs.push(component)
+    if (!this.refs.includes(component)) {
+      this.refs.push(component)
+    }
+  }
+  /*
+  * plugins implementation inestable
+  */
+  installPlugins () {
+    this.pluginsContext = {}
+    this.pluginsFunctions = {}
+
+    this.plugins.forEach(plugin => {
+      const context = this.pluginsContext[plugin.name] = {}
+
+      plugin.suscribe.onCreate(this, context)
+      
+      const pluginNode = this[plugin.name] = {}
+      
+      for (const funcName in plugin.define) {
+        const func = plugin.define[funcName]
+        
+        pluginNode[funcName] = () => {
+          func(this, context, ...arguments)
+        }
+      }
+    })
   }
 }
 
