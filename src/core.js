@@ -76,6 +76,8 @@ class Wallant extends Debugger {
 
     // on create store exec
     !!(typeof created === 'function') && created.apply(this)
+
+    this.createComputedValues()
   }
 
   async restoreState () {
@@ -129,6 +131,13 @@ class Wallant extends Debugger {
     })
   }
 
+  createComputedValues () {
+    for (const key in this.computed) {
+      const fnCompute = this.computed[key]
+      this.state[key] = (fnCompute.bind(this))()
+    }
+  }
+
   setState (state, isCalledFromSelfStore) {
 
     if (this.debug.includes('state') && !isCalledFromSelfStore) {
@@ -160,10 +169,7 @@ class Wallant extends Debugger {
       }
     }
 
-    for (const key in this.computed) {
-      const fnCompute = this.computed[key]
-      this.state[key] = (fnCompute.bind(this))()
-    }
+    this.createComputedValues()
 
     if (this.debug.includes('state') && !isCalledFromSelfStore)
       this.printFinalState(this.state)
