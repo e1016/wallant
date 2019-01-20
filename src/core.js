@@ -14,10 +14,12 @@ class Wallant extends Debugger {
     validate,
     computed,
     debug,
-    created,
-    plugins
+    created
   }) {
 
+    /**
+     * debug will be removed soon
+     */
     super(debug)
 
     /*
@@ -34,7 +36,6 @@ class Wallant extends Debugger {
     this.computed = computed || {}
     this.restored = false
     this.debug = debug || []
-    this.plugins = plugins
 
     // may no need restore state
     if (this.persistant) {
@@ -72,8 +73,6 @@ class Wallant extends Debugger {
     */
     this.ss = this.setState
 
-    !!Array.isArray(this.plugins) && this.installPlugins()
-
     // on create store exec
     !!(typeof created === 'function') && created.apply(this)
 
@@ -97,11 +96,14 @@ class Wallant extends Debugger {
     }
   }
 
-  saveState () {
-    AsyncStorage.setItem(STORE_NAME, JSON.stringify(this.state))
+  commit () {
+    return new Promise ((resolve, reject) => {
+      AsyncStorage.setItem(STORE_NAME, JSON.stringify(this.state))
       .then((err) => {
-        if (err) throw message.STORAGE_INAVALIBLE
+        if (err) { reject() }
+        resolve()
       })
+    })
   }
 
   resetState () {
@@ -112,8 +114,9 @@ class Wallant extends Debugger {
     */
     AsyncStorage.removeItem(STORE_NAME)
       .then((err) => {
-        if (err)
+        if (err) {
           throw message.STORAGE_INAVALIBLE
+        }
 
         this.state = {}
         this.setState(
@@ -133,12 +136,28 @@ class Wallant extends Debugger {
 
   createComputedValues () {
     for (const key in this.computed) {
-      const fnCompute = this.computed[key]
-      this.state[key] = (fnCompute.bind(this))()
+      this.state[key] = this.computed[key].apply(this)
+    }
+  }
+
+  dispatch (actionName, ...args) {
+
+    console.log(this.action[actionName], actionName, this.action)
+
+    if (action = this.action[actionName]) {
+      action(...args)
+    } else {
+      throw new Error(`Action ${actionName} not defined`)
     }
   }
 
   setState (state, isCalledFromSelfStore) {
+
+    if (typeof state === 'function') {
+      state = state(Object.assign({}, this.state))
+    }
+
+    console.log('---->', state)
 
     if (this.debug.includes('state') && !isCalledFromSelfStore) {
       this.printState(state, this.state)
@@ -171,18 +190,19 @@ class Wallant extends Debugger {
 
     this.createComputedValues()
 
-    if (this.debug.includes('state') && !isCalledFromSelfStore)
+    if (this.debug.includes('state') && !isCalledFromSelfStore) {
       this.printFinalState(this.state)
+    }
 
-    if (this.persistant) {
-      if (isCalledFromSelfStore) {
-        this.restored = true
-      } else {
-        this.saveState()
-      }
+    if (this.persistant && isCalledFromSelfStore) {
+      this.restored = true
     }
 
     this.dispatchUpdateComponents()
+
+    return {
+      commit: this.commit.bind(this)
+    }
   }
 
   use (component) {
@@ -190,29 +210,6 @@ class Wallant extends Debugger {
     if (!this.refs.includes(component)) {
       this.refs.push(component)
     }
-  }
-  /*
-  * plugins implementation inestable
-  */
-  installPlugins () {
-    this.pluginsContext = {}
-    this.pluginsFunctions = {}
-
-    this.plugins.forEach(plugin => {
-      const context = this.pluginsContext[plugin.name] = {}
-
-      plugin.suscribe.onCreate(this, context)
-      
-      const pluginNode = this[plugin.name] = {}
-      
-      for (const funcName in plugin.define) {
-        const func = plugin.define[funcName]
-        
-        pluginNode[funcName] = () => {
-          func(this, context, ...arguments)
-        }
-      }
-    })
   }
 }
 

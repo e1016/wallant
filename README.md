@@ -7,7 +7,7 @@
   <img src="https://i.imgur.com/M1JFh4j.png" width="400">
 </p>
 
-<p align="center">Persistant, Auto-validate, and computed state container</p>
+<p align="center">Persistant, auto-validate, and predictable state container for React Native</p>
 
 ---
 
@@ -78,17 +78,48 @@ Now, all this is a simple store, but wallant can do more interesting things...
 
 ## persistant
 
-This feature save state automatically and allow restore it when app starts, you only need declare `persistant` as `true` in Wallant constructor.
+> [ DEPRECATED in 2.0 ] This feature save state automatically and allow restore it when app starts, you only need declare `persistant` as `true` in Wallant constructor. 
+
+We detect an important performance leak for automatically save state in phone some times, for example, when you set state on change text event. We resolve this creating a `commit` behavior, `persistant: true` still working. TextInput example implementation.
 
 ```js
+// store
 const store = new Wallant({
   // [...]
   persistant: true,
   // [...]
 })
+
+
+<TextInput
+  onEndEditing={() =>
+    store.commit() // saves state in storage
+  }
+  onChangeText={text =>
+    store.action.updateText(text) // update state
+  }/>
 ```
 
 default state is loaded to store on first time.
+
+You can detect if store state is restored checking for `store.restored` is a boolean, meanwhile store.restored is false, state is restoring, and is true after that.
+
+```js
+render () {
+  return store.restored (
+    <View>
+      <Text>State is restored!</Text>
+    </View>
+  ) : (
+    <View>
+      <Text>State is restoring...</Text>
+    </View>
+  )
+}
+```
+
+Reset state it's easy, use `store.resetState()` and it's all.
+
 
 ---
 
@@ -114,6 +145,20 @@ const store = new Wallant({
     }
   }
 })
+```
+
+Use a callback for update state
+
+```js
+// ss === setState 
+this.ss(state => {
+  state.someKey = 'A new value'
+  state.otherKey = {
+    propOne: 'val 1',
+    propTwo: 'val 2'
+  }
+  return state
+}).commit() // <- persistant state
 ```
 
 You can make actions (and any) modular easy using spread operator.
