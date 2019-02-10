@@ -1,26 +1,19 @@
 import { AsyncStorage } from 'react-native'
 
 import message from './consts'
-import Debugger from './debugger'
 
 // used for AscynStorage
 const STORE_NAME = '@simplestate:persistantstate:store'
 
-class Wallant extends Debugger {
+class Wallant {
   constructor ({
     state,
     actions,
     persistant,
     validate,
     computed,
-    debug,
     created
   }) {
-
-    /**
-     * debug will be removed soon
-     */
-    super(debug)
 
     /*
     * 'refs' is used for save
@@ -35,7 +28,6 @@ class Wallant extends Debugger {
     this.validate = validate || {}
     this.computed = computed || {}
     this.restored = false
-    this.debug = debug || []
 
     // may no need restore state
     if (this.persistant) {
@@ -60,9 +52,11 @@ class Wallant extends Debugger {
     * is neccessary for use 'this'
     * in action methods
     */
+   
     for (const key in actions) {
-      if (typeof actions[key] !== 'function')
+      if (typeof actions[key] !== 'function') {
         throw message.SHOULD_BE_FUNCTION
+      }
 
       this.action[key] = actions[key].bind(this)
     }
@@ -157,12 +151,6 @@ class Wallant extends Debugger {
       state = state(Object.assign({}, this.state))
     }
 
-    console.log('---->', state)
-
-    if (this.debug.includes('state') && !isCalledFromSelfStore) {
-      this.printState(state, this.state)
-    }
-
     for (const key in state) {
       let fnValidate
       /*
@@ -173,10 +161,6 @@ class Wallant extends Debugger {
       if (fnValidate = this.validate[key]) {
         // assign state meanwhile function return true
         const accepted = fnValidate(state[key], this.state[key])
-
-        if (this.debug.includes('validate') && !isCalledFromSelfStore) {
-          this.printValidate(key, accepted, state[key], this.state[key])
-        }
 
         if (accepted || !this.restored) {
           this.state[key] = state[key]
@@ -189,10 +173,6 @@ class Wallant extends Debugger {
     }
 
     this.createComputedValues()
-
-    if (this.debug.includes('state') && !isCalledFromSelfStore) {
-      this.printFinalState(this.state)
-    }
 
     if (this.persistant && isCalledFromSelfStore) {
       this.restored = true
