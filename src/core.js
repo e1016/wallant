@@ -135,9 +135,6 @@ class Wallant {
   }
 
   dispatch (actionName, ...args) {
-
-    console.log(this.action[actionName], actionName, this.action)
-
     if (action = this.action[actionName]) {
       action(...args)
     } else {
