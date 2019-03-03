@@ -29,6 +29,8 @@ class Wallant {
     this.computed = computed || {}
     this.restored = false
 
+    this.restoredCallbackStack = []
+
     // may no need restore state
     if (this.persistant) {
       this.restoreState()
@@ -76,9 +78,6 @@ class Wallant {
   async restoreState () {
     const state = await AsyncStorage.getItem(STORE_NAME)
 
-    /*
-    * NOTE: checking on this...
-    */
     if (state) {
       this.setState(JSON.parse(state), true)
     } else {
@@ -88,6 +87,17 @@ class Wallant {
       )
       this.restored = true
     }
+
+    // dispatching onRestored function
+    this.restoredCallbackStack.forEach(
+      func => func()
+    )
+  }
+
+  onRestored (callback) {
+    this.restoredCallbackStack.push(
+      callback
+    )
   }
 
   commit () {
@@ -135,9 +145,6 @@ class Wallant {
   }
 
   dispatch (actionName, ...args) {
-
-    console.log(this.action[actionName], actionName, this.action)
-
     if (action = this.action[actionName]) {
       action(...args)
     } else {
