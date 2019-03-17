@@ -106,7 +106,7 @@ You can detect if store state is restored checking for `store.restored` is a boo
 
 ```js
 render () {
-  return store.restored (
+  return store.restored ? (
     <View>
       <Text>State is restored!</Text>
     </View>
