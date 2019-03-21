@@ -1,6 +1,7 @@
 import { AsyncStorage } from 'react-native'
 
 import message from './consts'
+import { cloneOf } from './utils'
 
 // used for AscynStorage
 const STORE_NAME = '@simplestate:persistantstate:store'
@@ -54,7 +55,7 @@ class Wallant {
     * is neccessary for use 'this'
     * in action methods
     */
-   
+
     for (const key in actions) {
       if (typeof actions[key] !== 'function') {
         throw message.SHOULD_BE_FUNCTION
@@ -155,7 +156,20 @@ class Wallant {
   setState (state, isCalledFromSelfStore) {
 
     if (typeof state === 'function') {
-      state = state(Object.assign({}, this.state))
+
+      updatedState = state(
+        cloneOf(this.state)
+      )
+
+      console.log(updatedState);
+
+      state = updatedState
+
+      console.log('STATE ->', state)
+
+      if (state === undefined) {
+        throw message.FORGOT_RETURN_STATE
+      }
     }
 
     for (const key in state) {
