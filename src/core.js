@@ -157,15 +157,11 @@ class Wallant {
 
     if (typeof state === 'function') {
 
-      updatedState = state(
+      let updatedState = state(
         cloneOf(this.state)
       )
 
-      console.log(updatedState);
-
       state = updatedState
-
-      console.log('STATE ->', state)
 
       if (state === undefined) {
         throw message.FORGOT_RETURN_STATE
