@@ -1,7 +1,6 @@
 import { AsyncStorage } from 'react-native'
 
 import message from './consts'
-import { cloneOf } from './utils'
 
 // used for AscynStorage
 const STORE_NAME = '@simplestate:persistantstate:store'
@@ -11,7 +10,6 @@ class Wallant {
     state,
     actions,
     persistant,
-    ignore,
     validate,
     computed,
     created
@@ -26,7 +24,6 @@ class Wallant {
     this.action = {}
 
     this.persistant = !!persistant
-    this.ignore = ignore
 
     this.validate = validate || {}
     this.computed = computed || {}
@@ -57,7 +54,7 @@ class Wallant {
     * is neccessary for use 'this'
     * in action methods
     */
-
+   
     for (const key in actions) {
       if (typeof actions[key] !== 'function') {
         throw message.SHOULD_BE_FUNCTION
@@ -76,17 +73,14 @@ class Wallant {
     !!(typeof created === 'function') && created.apply(this)
 
     this.createComputedValues()
+    this.makeStateReactive(state)
   }
 
   async restoreState () {
     const state = await AsyncStorage.getItem(STORE_NAME)
-    if (state) {
-      const newState = JSON.parse(state)
 
-      this.setState({
-        ...this.state,
-        ...newState
-      }, true)
+    if (state) {
+      this.setState(JSON.parse(state), true)
     } else {
       this.setState(
         Object.assign({}, this.provisingState),
@@ -107,16 +101,51 @@ class Wallant {
     )
   }
 
-  commit () {
-    const stateCopy = Object.assign({}, this.state)
+  makeStateReactive (state) {
+    var self = this
 
-    if (this.ignore && Array.isArray(this.ignore)) {
-      this.ignore.forEach(node =>
-        delete stateCopy[node]
-      )      
+    for (const key in state) {
+      const item = state[key]
+      if (
+        typeof item !== 'string' &&
+        typeof item !== 'number' &&
+        item !== null &&
+        isNaN(item)
+      ) {
+        if (Array.isArray(item)) {
+          item.__proto__.$push = function (item) {
+            this.push(item)
+            self.dispatchUpdateComponents()
+            self.createComputedValues()
+          }
+          item.__proto__.$pop = function () {
+            const result = this.pop()
+            self.dispatchUpdateComponents()
+            self.createComputedValues()
+            return result
+          }
+          item.__proto__.$shift = function () {
+            const result = this.shift()
+            self.dispatchUpdateComponents()
+            self.createComputedValues()
+            return result
+          }
+          item.__proto__.$unshift = function () {
+            this.unshift()
+            self.dispatchUpdateComponents()
+            self.createComputedValues()
+          }
+        }
+        for (const _key in item) {
+          this.makeStateReactive(item[_key])
+        }
+      }
     }
+  }
+
+  commit () {
     return new Promise ((resolve, reject) => {
-      AsyncStorage.setItem(STORE_NAME, JSON.stringify(stateCopy))
+      AsyncStorage.setItem(STORE_NAME, JSON.stringify(this.state))
       .then((err) => {
         if (err) { reject() }
         resolve()
@@ -169,16 +198,7 @@ class Wallant {
   setState (state, isCalledFromSelfStore) {
 
     if (typeof state === 'function') {
-
-      let updatedState = state(
-        cloneOf(this.state)
-      )
-
-      state = updatedState
-
-      if (state === undefined) {
-        throw message.FORGOT_RETURN_STATE
-      }
+      state = state(Object.assign({}, this.state))
     }
 
     for (const key in state) {
