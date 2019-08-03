@@ -1,6 +1,7 @@
 import { AsyncStorage } from 'react-native'
 
 import message from './consts'
+import { cloneOf } from './utils'
 
 // used for AscynStorage
 const STORE_NAME = '@simplestate:persistantstate:store'
@@ -10,6 +11,7 @@ class Wallant {
     state,
     actions,
     persistant,
+    ignore,
     validate,
     computed,
     created
@@ -24,6 +26,7 @@ class Wallant {
     this.action = {}
 
     this.persistant = !!persistant
+    this.ignore = ignore
 
     this.validate = validate || {}
     this.computed = computed || {}
@@ -73,14 +76,19 @@ class Wallant {
     !!(typeof created === 'function') && created.apply(this)
 
     this.createComputedValues()
-    this.makeStateReactive(state)
+    this.makeReactiveArrays(state)
   }
 
   async restoreState () {
     const state = await AsyncStorage.getItem(STORE_NAME)
 
     if (state) {
-      this.setState(JSON.parse(state), true)
+      const newState = JSON.parse(state)
+
+      this.setState({
+        ...this.state,
+        ...newState
+      }, true)
     } else {
       this.setState(
         Object.assign({}, this.provisingState),
@@ -101,7 +109,7 @@ class Wallant {
     )
   }
 
-  makeStateReactive (state) {
+  makeReactiveArrays (state) {
     var self = this
 
     for (const key in state) {
@@ -115,25 +123,30 @@ class Wallant {
         if (Array.isArray(item)) {
           item.__proto__.$push = function (item) {
             this.push(item)
-            self.dispatchUpdateComponents()
             self.createComputedValues()
+            self.updateComponents()
           }
           item.__proto__.$pop = function () {
             const result = this.pop()
-            self.dispatchUpdateComponents()
             self.createComputedValues()
+            self.updateComponents()
             return result
           }
           item.__proto__.$shift = function () {
             const result = this.shift()
-            self.dispatchUpdateComponents()
             self.createComputedValues()
+            self.updateComponents()
             return result
           }
           item.__proto__.$unshift = function () {
             this.unshift()
-            self.dispatchUpdateComponents()
             self.createComputedValues()
+            self.updateComponents()
+          }
+          item.__proto__.$concat = function (array) {
+            this.concat(array)
+            self.createComputedValues()
+            self.updateComponents()
           }
         }
         for (const _key in item) {
@@ -144,8 +157,15 @@ class Wallant {
   }
 
   commit () {
+    const stateCopy = Object.assign({}, this.state)
+
+    if (this.ignore && Array.isArray(this.ignore)) {
+      this.ignore.forEach(node =>
+        delete stateCopy[node]
+      )
+    }
     return new Promise ((resolve, reject) => {
-      AsyncStorage.setItem(STORE_NAME, JSON.stringify(this.state))
+      AsyncStorage.setItem(STORE_NAME, JSON.stringify(stateCopy))
       .then((err) => {
         if (err) { reject() }
         resolve()
@@ -173,7 +193,7 @@ class Wallant {
       })
   }
 
-  dispatchUpdateComponents () {
+  updateComponents () {
     this.refs.forEach(component => {
       if (component.updater.isMounted(component)) {
         component.forceUpdate()
@@ -199,6 +219,16 @@ class Wallant {
 
     if (typeof state === 'function') {
       state = state(Object.assign({}, this.state))
+
+      let updatedState = state(
+        cloneOf(this.state)
+      )
+
+      state = updatedState
+
+      if (state === undefined) {
+        throw message.FORGOT_RETURN_STATE
+      }
     }
 
     for (const key in state) {
@@ -228,7 +258,7 @@ class Wallant {
       this.restored = true
     }
 
-    this.dispatchUpdateComponents()
+    this.updateComponents()
 
     return {
       commit: this.commit.bind(this)
