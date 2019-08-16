@@ -76,7 +76,6 @@ class Wallant {
     !!(typeof created === 'function') && created.apply(this)
 
     this.createComputedValues()
-    this.makeReactiveArrays(state)
   }
 
   async restoreState () {
@@ -107,53 +106,6 @@ class Wallant {
     this.restoredCallbackStack.push(
       callback
     )
-  }
-
-  makeReactiveArrays (state) {
-    var self = this
-
-    for (const key in state) {
-      const item = state[key]
-      if (
-        typeof item !== 'string' &&
-        typeof item !== 'number' &&
-        item !== null &&
-        isNaN(item)
-      ) {
-        if (Array.isArray(item)) {
-          item.__proto__.$push = function (item) {
-            this.push(item)
-            self.createComputedValues()
-            self.updateComponents()
-          }
-          item.__proto__.$pop = function () {
-            const result = this.pop()
-            self.createComputedValues()
-            self.updateComponents()
-            return result
-          }
-          item.__proto__.$shift = function () {
-            const result = this.shift()
-            self.createComputedValues()
-            self.updateComponents()
-            return result
-          }
-          item.__proto__.$unshift = function () {
-            this.unshift()
-            self.createComputedValues()
-            self.updateComponents()
-          }
-          item.__proto__.$concat = function (array) {
-            this.concat(array)
-            self.createComputedValues()
-            self.updateComponents()
-          }
-        }
-        for (const _key in item) {
-          this.makeStateReactive(item[_key])
-        }
-      }
-    }
   }
 
   commit () {
