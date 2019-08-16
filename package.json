@@ -1,6 +1,6 @@
 {
   "name": "wallant",
-  "version": "2.2.0",
+  "version": "2.2.1",
   "description": "Persistant, auto-validate, and computed state container",
   "main": "index.js",
   "keywords": [
