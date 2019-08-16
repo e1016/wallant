@@ -1,5 +1,5 @@
 /*
-* Wallant 1.1.2 – 2018/11/15
+* Wallant 2.2.0 - 2019/08/16
 *
 * State manager
 * Eliseo Geraldo <e10169610@gmail.com>
